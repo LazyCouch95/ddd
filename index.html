@@ -5,8 +5,8 @@
   <title>Подай свою идею</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <!-- Ваш рабочий ключ Яндекс.Карт -->
-  <script src="https://api-maps.yandex.ru/2.1/?apikey=675d2ed7-1696-4ff5-95c5-0110bc694eb6&lang=ru_RU" type="text/javascript"></script>
+  <!-- ВАШ НОВЫЙ КЛЮЧ ЯНДЕКС.КАРТ -->
+  <script src="https://api-maps.yandex.ru/2.1/?apikey=d133cc79-c1e4-4d04-97fa-02e5c329df64&lang=ru_RU" type="text/javascript"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
@@ -21,28 +21,39 @@
     h2 { font-size: 1.3rem; font-weight: 700; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .header-desc { margin: 6px auto 0; color: #555; font-size: 0.9rem; }
     
-    #map { flex: 1; width: 100%; min-height: 400px; }
+    #map { flex: 1; width: 100%; min-height: 400px; position: relative; }
     
+    #btn-geoloc {
+      position: absolute; bottom: 20px; right: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white; border: none; border-radius: 50%;
+      width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 20; font-size: 1.3rem;
+    }
+    #btn-geoloc:hover { transform: scale(1.05); }
+
     .balloon-content { padding: 10px; font-size: 0.95rem; line-height: 1.5; }
     .coord-display { background: #f0f8ff; padding: 10px; border-radius: 8px; color: #0056b3; font-weight: 700; text-align: center; margin: 8px 0; user-select: all; border: 2px solid #cce5ff; }
     .btn-open-form { display: block; width: 100%; text-align: center; color: white; background: linear-gradient(135deg, #0056b3 0%, #007bff 100%); text-decoration: none; padding: 12px 0; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; font-family: inherit; transition: 0.3s; }
-    .btn-open-form:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-open-form:hover { opacity: 0.9; }
     .hint { font-size: 0.8rem; color: #666; margin-top: 6px; font-style: italic; }
   </style>
 </head>
 <body>
   <header>
     <h2>🗺️ Подай свою идею</h2>
-    <p class="header-desc">Найдите адрес через поиск на карте или кликните по ней</p>
+    <p class="header-desc">Найдите адрес через поиск, кликните по карте или нажмите «📍»</p>
   </header>
   
-  <div id="map"></div>
+  <div id="map">
+    <button id="btn-geoloc" title="Моё местоположение">📍</button>
+  </div>
 
   <script>
     const FORM_URL = "https://forms.yandex.ru/cloud/6af7440690290289b69a0068";
     let myMap, myPlacemark;
 
-    // Функция копирования и открытия формы
+    // Копирование координат и открытие формы
     window.copyAndOpen = function(url, text, btn) {
       navigator.clipboard.writeText(text).then(() => {
         const originalText = btn.textContent;
@@ -57,17 +68,17 @@
     };
 
     ymaps.ready(function () {
-      // Инициализация карты с поиском и зумом
+      // 1. Инициализация карты
       myMap = new ymaps.Map("map", { 
         center: [56.2686, 90.4953], 
         zoom: 13, 
         controls: ["zoomControl", "searchControl"] 
       });
       
+      // 2. Настройка поиска
       const searchControl = myMap.controls.get('searchControl');
-      searchControl.options.set('noPlacemark', true); // Убираем стандартную метку Яндекса
+      searchControl.options.set('noPlacemark', true); 
       
-      // При выборе адреса из поиска
       searchControl.events.add('resultselect', function (e) {
         const index = searchControl.getSelectedIndex();
         searchControl.getResult(index).then(function (res) {
@@ -77,9 +88,26 @@
         });
       });
 
-      // При клике по карте
+      // 3. Клик по карте
       myMap.events.add('click', function (e) {
         openIdeaForm(e.get('coords'));
+      });
+
+      // 4. Кнопка геолокации
+      document.getElementById('btn-geoloc').addEventListener('click', () => {
+        if (!navigator.geolocation) { alert('Геолокация не поддерживается'); return; }
+        const btn = document.getElementById('btn-geoloc');
+        btn.innerHTML = '⏳';
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const coords = [pos.coords.latitude, pos.coords.longitude];
+            openIdeaForm(coords);
+            myMap.setCenter(coords, 16);
+            btn.innerHTML = '📍';
+          },
+          () => { alert('Не удалось определить местоположение'); btn.innerHTML = '📍'; },
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
       });
     });
 
@@ -94,7 +122,7 @@
           <div class="balloon-content">
             <p style="margin-top:0;font-weight:bold;">📍 Место выбрано</p>
             <div class="coord-display">${lat}, ${lng}</div>
-            <p class="hint">Скопируйте эти координаты и вставьте их в форму.</p>
+            <p class="hint">Нажмите кнопку ниже, координаты скопируются автоматически.</p>
             <button onclick="copyAndOpen('${FORM_URL}', '${lat}, ${lng}', this)" class="btn-open-form">✨ Скопировать и открыть форму</button>
           </div>`
       }, { 
