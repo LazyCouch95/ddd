@@ -4,136 +4,404 @@
   <meta charset="UTF-8" />
   <title>Подай свою идею</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
-  <!-- ВАШ НОВЫЙ КЛЮЧ ЯНДЕКС.КАРТ -->
-  <script src="https://api-maps.yandex.ru/2.1/?apikey=d133cc79-c1e4-4d04-97fa-02e5c329df64&lang=ru_RU" type="text/javascript"></script>
+
+  <script src="https://api-maps.yandex.ru/2.1/?apikey=675d2ed7-1696-4ff5-95c5-0110bc694eb6&lang=ru_RU" type="text/javascript"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; font-family: 'Inter', sans-serif; overflow: hidden; }
-    body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; flex-direction: column; }
     
-    header { 
-      padding: 15px 20px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); 
-      text-align: center; z-index: 10; flex-shrink: 0; border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+    html, body { 
+      width: 100%; height: 100%; overflow-x: hidden;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
     }
-    h2 { font-size: 1.3rem; font-weight: 700; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .header-desc { margin: 6px auto 0; color: #555; font-size: 0.9rem; }
     
-    #map { flex: 1; width: 100%; min-height: 400px; position: relative; }
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex; flex-direction: column; height: 100vh;
+      transition: background .3s, color .3s;
+    }
     
+    header {
+      padding: 20px 24px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      position: relative; z-index: 10;
+      text-align: center;
+      border-bottom: 3px solid rgba(102, 126, 234, 0.2);
+    }
+    
+    h2 { 
+      margin: 0; font-size: 1.4rem; font-weight: 700;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; letter-spacing: -0.5px;
+    }
+    
+    .header-desc { 
+      margin: 8px auto 0; max-width: 900px; color: #555; 
+      font-size: 0.95rem; line-height: 1.5; font-weight: 400;
+    }
+    
+    .legend { 
+      margin-top: 12px; font-size: 0.9rem; color: #444;
+      display: flex; justify-content: center; gap: 24px; flex-wrap: wrap;
+    }
+    
+    .legend-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 12px; background: rgba(255, 255, 255, 0.7);
+      border-radius: 20px; font-weight: 500; transition: all 0.3s ease;
+    }
+    .legend-item:hover {
+      background: rgba(255, 255, 255, 0.9); transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .dot { 
+      width: 14px; height: 14px; border-radius: 50%; 
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); animation: pulse 2s infinite;
+    }
+    .dot.green { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); }
+    .dot.blue { background: linear-gradient(135deg, #0056b3 0%, #007bff 100%); }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+    }
+
+    .filter-container {
+      display: flex; justify-content: center; gap: 10px;
+      margin-top: 16px; flex-wrap: wrap;
+    }
+    .filter-btn {
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(102, 126, 234, 0.3);
+      color: #333; padding: 6px 16px; border-radius: 20px;
+      cursor: pointer; font-weight: 600; font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+    .filter-btn:hover {
+      background: rgba(255, 255, 255, 0.95); transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .filter-btn.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    #map { flex: 1; width: 100%; min-height: 350px; box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.1); }
+
     #btn-geoloc {
-      position: absolute; bottom: 20px; right: 20px;
+      position: absolute; bottom: 24px; right: 24px;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white; border: none; border-radius: 50%;
-      width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
-      cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 20; font-size: 1.3rem;
+      width: 60px; height: 60px; display: flex; 
+      align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+      z-index: 20; font-size: 1.5rem; transition: all 0.3s ease;
     }
-    #btn-geoloc:hover { transform: scale(1.05); }
+    #btn-geoloc:hover { transform: translateY(-4px) scale(1.05); box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6); }
+    #btn-geoloc:active { transform: translateY(-2px) scale(1.02); }
 
-    .balloon-content { padding: 10px; font-size: 0.95rem; line-height: 1.5; }
-    .coord-display { background: #f0f8ff; padding: 10px; border-radius: 8px; color: #0056b3; font-weight: 700; text-align: center; margin: 8px 0; user-select: all; border: 2px solid #cce5ff; }
-    .btn-open-form { display: block; width: 100%; text-align: center; color: white; background: linear-gradient(135deg, #0056b3 0%, #007bff 100%); text-decoration: none; padding: 12px 0; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; font-family: inherit; transition: 0.3s; }
-    .btn-open-form:hover { opacity: 0.9; }
-    .hint { font-size: 0.8rem; color: #666; margin-top: 6px; font-style: italic; }
+    .balloon-content { padding: 8px; font-size: 0.95rem; line-height: 1.5; }
+    .coord-display {
+      background: linear-gradient(135deg, #f0f8ff 0%, #e6f2ff 100%);
+      padding: 12px; border-radius: 10px; color: #0056b3;
+      font-size: 1rem; border: 2px solid #cce5ff;
+      margin: 10px 0; font-weight: 700; text-align: center; user-select: all;
+      box-shadow: 0 2px 8px rgba(0, 86, 179, 0.1);
+    }
+    .btn-pkk, .btn-open-form {
+      display: block; width: 100%; text-align: center; color: white;
+      text-decoration: none; padding: 13px 0; border-radius: 10px;
+      font-weight: 600; margin-top: 10px; font-size: 0.95rem;
+      transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .btn-pkk { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); }
+    .btn-pkk:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(40, 167, 69, 0.3); }
+    .btn-open-form { background: linear-gradient(135deg, #0056b3 0%, #007bff 100%); }
+    .btn-open-form:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0, 86, 179, 0.3); }
+    .hint { font-size: 0.85rem; color: #666; margin-top: 8px; line-height: 1.4; font-style: italic; }
+
+    .project-badge {
+      display: inline-block; background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white; padding: 4px 12px; border-radius: 16px;
+      font-size: 0.8rem; font-weight: 700; margin-bottom: 8px;
+      box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3); text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .project-title { font-weight: 700; font-size: 1.1rem; margin: 4px 0 8px; color: #2c3e50; line-height: 1.3; }
+    .project-row { margin: 6px 0; color: #555; line-height: 1.5; }
+    .project-year { color: #888; font-style: italic; font-size: 0.88rem; margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; }
+    .project-image {
+      width: 100%; max-height: 200px; object-fit: cover; border-radius: 10px;
+      margin-bottom: 10px; border: 2px solid #e0e0e0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+    }
+    .project-image:hover { transform: scale(1.02); }
+
+    #a11y-toggle {
+      position: absolute; top: 12px; right: 12px;
+      background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);
+      border: 2px solid rgba(102, 126, 234, 0.3); border-radius: 20px;
+      padding: 8px 16px; font-size: 0.88rem; font-weight: 600;
+      cursor: pointer; z-index: 15; transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    #a11y-toggle:hover {
+      background: rgba(255, 255, 255, 1); border-color: rgba(102, 126, 234, 0.6);
+      transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    }
+
+    /* === ВЕРСИЯ ДЛЯ СЛАБОВИДЯЩИХ === */
+    body.a11y-active { background: #fff !important; }
+    body.a11y-active header { background: #fff !important; border-bottom: 3px solid #000 !important; }
+    body.a11y-active h2 { font-size: 1.8rem !important; color: #000 !important; -webkit-text-fill-color: #000 !important; }
+    body.a11y-active .header-desc, body.a11y-active .legend { font-size: 1.15rem !important; color: #000 !important; }
+    body.a11y-active .balloon-content { font-size: 1.2rem !important; }
+    body.a11y-active .coord-display { font-size: 1.3rem !important; border: 3px solid #000 !important; }
+    body.a11y-active .btn-pkk, body.a11y-active .btn-open-form { font-size: 1.2rem !important; padding: 16px 0 !important; border: 3px solid #000 !important; }
+    body.a11y-active #a11y-toggle { font-size: 1.05rem !important; border: 3px solid #000 !important; }
+    
+    body.a11y-active .filter-btn {
+      background: #fff !important; color: #000 !important; border: 2px solid #000 !important;
+    }
+    body.a11y-active .filter-btn.active {
+      background: #000 !important; color: #fff !important;
+    }
+
+    body.a11y-bw, body.a11y-bw header { background: #fff !important; color: #000 !important; }
+    body.a11y-bw h2, body.a11y-bw .header-desc, body.a11y-bw .legend, body.a11y-bw .hint { color: #000 !important; }
+    body.a11y-bw .coord-display { background: #fff !important; color: #000 !important; border: 3px solid #000 !important; }
+    body.a11y-bw .btn-pkk, body.a11y-bw .btn-open-form { background: #000 !important; color: #fff !important; }
+
+    body.a11y-wb, body.a11y-wb header { background: #000 !important; color: #fff !important; }
+    body.a11y-wb h2, body.a11y-wb .header-desc, body.a11y-wb .legend, body.a11y-wb .hint { color: #fff !important; }
+    body.a11y-wb .coord-display { background: #000 !important; color: #fff !important; border: 3px solid #fff !important; }
+    body.a11y-wb .btn-pkk, body.a11y-wb .btn-open-form { background: #fff !important; color: #000 !important; }
+    body.a11y-wb #map { filter: grayscale(100%) invert(100%); }
+
+    body.a11y-bb, body.a11y-bb header { background: #f3f0e6 !important; color: #000080 !important; }
+    body.a11y-bb h2, body.a11y-bb .header-desc, body.a11y-bb .legend, body.a11y-bb .hint { color: #000080 !important; }
+    body.a11y-bb .coord-display { background: #fff !important; color: #000080 !important; border: 3px solid #000080 !important; }
+    body.a11y-bb .btn-pkk, body.a11y-bb .btn-open-form { background: #000080 !important; color: #fff !important; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    header { animation: fadeIn 0.6s ease-out; }
+    #btn-geoloc { animation: fadeIn 0.8s ease-out 0.2s backwards; }
   </style>
 </head>
 <body>
   <header>
+    <button id="a11y-toggle" aria-label="Версия для слабовидящих">👁️ Для слабовидящих</button>
     <h2>🗺️ Подай свою идею</h2>
-    <p class="header-desc">Найдите адрес через поиск, кликните по карте или нажмите «📍»</p>
+    <p class="header-desc">
+      Кликните по свободному месту на карте или нажмите «📍», чтобы предложить благоустройство.
+    </p>
+    <div class="legend">
+      <div class="legend-item">
+        <i class="dot green"></i>
+        <span>Реализованные проекты: <b id="projects-count">0</b></span>
+      </div>
+      <div class="legend-item">
+        <i class="dot blue"></i>
+        <span>Ваша новая идея</span>
+      </div>
+    </div>
+    
+    <div class="filter-container" id="year-filters"></div>
   </header>
-  
-  <div id="map">
-    <button id="btn-geoloc" title="Моё местоположение">📍</button>
-  </div>
 
-  <script>
+  <div id="map"></div>
+  <button id="btn-geoloc" title="Определить моё местоположение">📍</button>
+
+  <script type="text/javascript">
+    const SHEET_ID = "1eUqsRNZW4T34RQu3EtpU4DDS6SY36OIJKNLrRygCRdM";
     const FORM_URL = "https://forms.yandex.ru/cloud/6af7440690290289b69a0068";
+
+    let a11yMode = parseInt(localStorage.getItem('a11y-mode')) || 0;
+    const a11yBtn = document.getElementById('a11y-toggle');
+    
+    function applyA11y() {
+      document.body.classList.remove('a11y-active', 'a11y-bw', 'a11y-wb', 'a11y-bb');
+      if (a11yMode === 0) {
+        a11yBtn.innerHTML = '👁️ Для слабовидящих';
+        localStorage.removeItem('a11y-mode');
+      } else {
+        document.body.classList.add('a11y-active');
+        if (a11yMode === 1) { document.body.classList.add('a11y-bw'); a11yBtn.innerHTML = '⚫ Чёрным по белому'; }
+        if (a11yMode === 2) { document.body.classList.add('a11y-wb'); a11yBtn.innerHTML = '⚪ Белым по чёрному'; }
+        if (a11yMode === 3) { document.body.classList.add('a11y-bb'); a11yBtn.innerHTML = '🔵 Синим по бежевому'; }
+        localStorage.setItem('a11y-mode', a11yMode);
+      }
+    }
+    a11yBtn.addEventListener('click', () => { a11yMode = (a11yMode + 1) % 4; applyA11y(); });
+    applyA11y();
+
     let myMap, myPlacemark;
+    let projectClickTime = 0;
+    let ALL_PROJECTS = [];
+    let currentMarkers = [];
 
-    // Копирование координат и открытие формы
-    window.copyAndOpen = function(url, text, btn) {
-      navigator.clipboard.writeText(text).then(() => {
-        const originalText = btn.textContent;
-        btn.textContent = '✅ Скопировано!';
-        btn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
-        setTimeout(() => { 
-          window.open(url, '_blank'); 
-          btn.textContent = originalText; 
-          btn.style.background = 'linear-gradient(135deg, #0056b3 0%, #007bff 100%)';
-        }, 600);
-      }).catch(() => window.open(url, '_blank'));
-    };
+    function getBalloonHtml(lat, lng) {
+      return `
+        <div class="balloon-content">
+          <p style="margin-top:0;font-weight:bold;font-size:1.05rem;">📍 Место выбрано</p>
+          <p style="margin-bottom:6px;color:#555;">Скопируйте эти координаты:</p>
+          <div class="coord-display">${lat}, ${lng}</div>
+          <a href="https://pkk.rosreestr.ru/" target="_blank" class="btn-pkk">🔍 Узнать кадастровый номер</a>
+          <p class="hint">Откроется карта Росреестра. Вставьте координаты в поиск, скопируйте номер участка и вернитесь сюда.</p>
+          <a href="${FORM_URL}" target="_blank" class="btn-open-form">✨ Перейти к форме отправки →</a>
+        </div>`;
+    }
 
-    ymaps.ready(function () {
-      // 1. Инициализация карты
-      myMap = new ymaps.Map("map", { 
-        center: [56.2686, 90.4953], 
-        zoom: 13, 
-        controls: ["zoomControl", "searchControl"] 
-      });
-      
-      // 2. Настройка поиска
-      const searchControl = myMap.controls.get('searchControl');
-      searchControl.options.set('noPlacemark', true); 
-      
-      searchControl.events.add('resultselect', function (e) {
-        const index = searchControl.getSelectedIndex();
-        searchControl.getResult(index).then(function (res) {
-          const coords = res.geometry.getCoordinates();
-          openIdeaForm(coords);
-          myMap.setCenter(coords, 16);
-        });
-      });
+    function getProjectHtml(p) {
+      let imageHtml = '';
+      if (p.image) {
+        imageHtml = `<img src="${p.image}" alt="${p.title}" class="project-image" onerror="this.style.display='none'">`;
+      }
+      return `
+        <div class="balloon-content">
+          ${imageHtml}
+          <span class="project-badge">✅ Реализовано</span>
+          <div class="project-title">${p.title}</div>
+          <div class="project-row">📍 <strong>${p.location}</strong></div>
+          <div class="project-row">${p.description}</div>
+          <div class="project-year">📅 Год реализации: <strong>${p.year}</strong> · ППМИ</div>
+        </div>`;
+    }
 
-      // 3. Клик по карте
-      myMap.events.add('click', function (e) {
-        openIdeaForm(e.get('coords'));
-      });
-
-      // 4. Кнопка геолокации
-      document.getElementById('btn-geoloc').addEventListener('click', () => {
-        if (!navigator.geolocation) { alert('Геолокация не поддерживается'); return; }
-        const btn = document.getElementById('btn-geoloc');
-        btn.innerHTML = '⏳';
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const coords = [pos.coords.latitude, pos.coords.longitude];
-            openIdeaForm(coords);
-            myMap.setCenter(coords, 16);
-            btn.innerHTML = '📍';
-          },
-          () => { alert('Не удалось определить местоположение'); btn.innerHTML = '📍'; },
-          { enableHighAccuracy: true, timeout: 10000 }
-        );
-      });
-    });
-
-    function openIdeaForm(coords) {
+    function openIdeaForm(coords, preset) {
       const lat = coords[0].toFixed(6);
       const lng = coords[1].toFixed(6);
-      
       if (myPlacemark) myMap.geoObjects.remove(myPlacemark);
-      
-      myPlacemark = new ymaps.Placemark(coords, {
-        balloonContent: `
-          <div class="balloon-content">
-            <p style="margin-top:0;font-weight:bold;">📍 Место выбрано</p>
-            <div class="coord-display">${lat}, ${lng}</div>
-            <p class="hint">Нажмите кнопку ниже, координаты скопируются автоматически.</p>
-            <button onclick="copyAndOpen('${FORM_URL}', '${lat}, ${lng}', this)" class="btn-open-form">✨ Скопировать и открыть форму</button>
-          </div>`
-      }, { 
-        preset: 'islands#blueDotIcon', 
-        balloonMaxWidth: 320,
-        hideIconOnBalloonOpen: false
-      });
-      
+      myPlacemark = new ymaps.Placemark(coords,
+        { balloonContent: getBalloonHtml(lat, lng) },
+        { preset: preset, hideIconOnBalloonOpen: false, balloonMaxWidth: 340 }
+      );
       myMap.geoObjects.add(myPlacemark);
       myPlacemark.balloon.open();
     }
+
+    function applyFilter(selectedYear, clickedBtn) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      if (clickedBtn) {
+        clickedBtn.classList.add('active');
+      } else {
+        document.querySelector('.filter-btn').classList.add('active');
+      }
+
+      myMap.geoObjects.removeAll();
+      currentMarkers = [];
+
+      const filteredProjects = selectedYear === 'Все' 
+        ? ALL_PROJECTS 
+        : ALL_PROJECTS.filter(p => String(p.year) === String(selectedYear));
+
+      document.getElementById('projects-count').textContent = `${filteredProjects.length} из ${ALL_PROJECTS.length}`;
+
+      filteredProjects.forEach(function (p) {
+        const mark = new ymaps.Placemark([p.lat, p.lng],
+          { balloonContent: getProjectHtml(p), hintContent: p.title },
+          { preset: 'islands#greenDotIcon', iconColor: '#28a745',
+            hideIconOnBalloonOpen: false, balloonMaxWidth: 340 }
+        );
+        mark.events.add('click', function () { projectClickTime = Date.now(); });
+        myMap.geoObjects.add(mark);
+        currentMarkers.push(mark);
+      });
+    }
+
+    function renderFilters(projects) {
+      const container = document.getElementById('year-filters');
+      container.innerHTML = '';
+      
+      const uniqueYears = [...new Set(projects.map(p => p.year).filter(Boolean))].sort((a, b) => b - a);
+      const yearsToDisplay = ['Все', ...uniqueYears];
+
+      yearsToDisplay.forEach(year => {
+        const btn = document.createElement('button');
+        btn.className = `filter-btn ${year === 'Все' ? 'active' : ''}`;
+        btn.textContent = year === 'Все' ? 'Все годы' : year;
+        btn.onclick = () => applyFilter(year, btn);
+        container.appendChild(btn);
+      });
+    }
+
+    ymaps.ready(function () {
+      try {
+        myMap = new ymaps.Map("map", {
+          center: [56.2686, 90.4953],
+          zoom: 13,
+          controls: ["zoomControl"]
+        });
+
+        myMap.events.add('click', function (e) {
+          if (Date.now() - projectClickTime < 400) return;
+          openIdeaForm(e.get('coords'), 'islands#blueDotIcon');
+        });
+
+        loadProjects();
+      } catch (err) {
+        console.error('Ошибка инициализации карты:', err);
+      }
+    });
+
+    function loadProjects() {
+      try {
+        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+        
+        fetch(url)
+          .then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.text();
+          })
+          .then(text => {
+            try {
+              const json = JSON.parse(text.substr(47).slice(0, -2));
+              const rows = json.table.rows;
+              
+              ALL_PROJECTS = rows.map(row => ({
+                title:       row.c[0] ? row.c[0].v : '',
+                location:    row.c[1] ? row.c[1].v : '',
+                description: row.c[2] ? row.c[2].v : '',
+                year:        row.c[3] ? String(row.c[3].v).trim() : '',
+                lat:         row.c[4] ? parseFloat(row.c[4].v) : 0,
+                lng:         row.c[5] ? parseFloat(row.c[5].v) : 0,
+                image:       row.c[6] ? row.c[6].v : ''
+              })).filter(p => p.lat && p.lng && p.title);
+
+              renderFilters(ALL_PROJECTS);
+              applyFilter('Все');
+              
+            } catch (parseErr) {
+              console.error('Ошибка парсинга данных из таблицы:', parseErr);
+            }
+          })
+          .catch(err => {
+            console.error('Не удалось загрузить проекты:', err);
+          });
+      } catch (err) {
+        console.error('Критическая ошибка loadProjects:', err);
+      }
+    }
+
+    document.getElementById('btn-geoloc').addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        alert('Геолокация не поддерживается в вашем браузере');
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const coords = [pos.coords.latitude, pos.coords.longitude];
+          myMap.setCenter(coords, 16);
+          openIdeaForm(coords, 'islands#blueDotIcon');
+        },
+        () => alert('Не удалось определить местоположение. Разрешите доступ к геолокации.')
+      );
+    });
   </script>
 </body>
-</html>
+</html> не работает клик определение адреса 
