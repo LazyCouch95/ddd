@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Подай свою идею</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <!-- Ваш рабочий ключ Яндекс.Карт -->
+  <script src="https://api-maps.yandex.ru/2.1/?apikey=675d2ed7-1696-4ff5-95c5-0110bc694eb6&lang=ru_RU" type="text/javascript"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; font-family: 'Inter', sans-serif; overflow: hidden; }
+    body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; flex-direction: column; }
+    
+    header { 
+      padding: 15px 20px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); 
+      text-align: center; z-index: 10; flex-shrink: 0; border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+    }
+    h2 { font-size: 1.3rem; font-weight: 700; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .header-desc { margin: 6px auto 0; color: #555; font-size: 0.9rem; }
+    
+    #map { flex: 1; width: 100%; min-height: 400px; }
+    
+    .balloon-content { padding: 10px; font-size: 0.95rem; line-height: 1.5; }
+    .coord-display { background: #f0f8ff; padding: 10px; border-radius: 8px; color: #0056b3; font-weight: 700; text-align: center; margin: 8px 0; user-select: all; border: 2px solid #cce5ff; }
+    .btn-open-form { display: block; width: 100%; text-align: center; color: white; background: linear-gradient(135deg, #0056b3 0%, #007bff 100%); text-decoration: none; padding: 12px 0; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; font-family: inherit; transition: 0.3s; }
+    .btn-open-form:hover { opacity: 0.9; transform: translateY(-1px); }
+    .hint { font-size: 0.8rem; color: #666; margin-top: 6px; font-style: italic; }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>🗺️ Подай свою идею</h2>
+    <p class="header-desc">Найдите адрес через поиск на карте или кликните по ней</p>
+  </header>
+  
+  <div id="map"></div>
+
+  <script>
+    const FORM_URL = "https://forms.yandex.ru/cloud/6af7440690290289b69a0068";
+    let myMap, myPlacemark;
+
+    // Функция копирования и открытия формы
+    window.copyAndOpen = function(url, text, btn) {
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = btn.textContent;
+        btn.textContent = '✅ Скопировано!';
+        btn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+        setTimeout(() => { 
+          window.open(url, '_blank'); 
+          btn.textContent = originalText; 
+          btn.style.background = 'linear-gradient(135deg, #0056b3 0%, #007bff 100%)';
+        }, 600);
+      }).catch(() => window.open(url, '_blank'));
+    };
+
+    ymaps.ready(function () {
+      // Инициализация карты с поиском и зумом
+      myMap = new ymaps.Map("map", { 
+        center: [56.2686, 90.4953], 
+        zoom: 13, 
+        controls: ["zoomControl", "searchControl"] 
+      });
+      
+      const searchControl = myMap.controls.get('searchControl');
+      searchControl.options.set('noPlacemark', true); // Убираем стандартную метку Яндекса
+      
+      // При выборе адреса из поиска
+      searchControl.events.add('resultselect', function (e) {
+        const index = searchControl.getSelectedIndex();
+        searchControl.getResult(index).then(function (res) {
+          const coords = res.geometry.getCoordinates();
+          openIdeaForm(coords);
+          myMap.setCenter(coords, 16);
+        });
+      });
+
+      // При клике по карте
+      myMap.events.add('click', function (e) {
+        openIdeaForm(e.get('coords'));
+      });
+    });
+
+    function openIdeaForm(coords) {
+      const lat = coords[0].toFixed(6);
+      const lng = coords[1].toFixed(6);
+      
+      if (myPlacemark) myMap.geoObjects.remove(myPlacemark);
+      
+      myPlacemark = new ymaps.Placemark(coords, {
+        balloonContent: `
+          <div class="balloon-content">
+            <p style="margin-top:0;font-weight:bold;">📍 Место выбрано</p>
+            <div class="coord-display">${lat}, ${lng}</div>
+            <p class="hint">Скопируйте эти координаты и вставьте их в форму.</p>
+            <button onclick="copyAndOpen('${FORM_URL}', '${lat}, ${lng}', this)" class="btn-open-form">✨ Скопировать и открыть форму</button>
+          </div>`
+      }, { 
+        preset: 'islands#blueDotIcon', 
+        balloonMaxWidth: 320,
+        hideIconOnBalloonOpen: false
+      });
+      
+      myMap.geoObjects.add(myPlacemark);
+      myPlacemark.balloon.open();
+    }
+  </script>
+</body>
+</html>
